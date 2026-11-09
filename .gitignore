@@ -1,0 +1,34 @@
+# Operating system files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Local editor settings
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Dependencies and caches
+node_modules/
+.npm/
+.cache/
+.parcel-cache/
+
+# Generated build output
+dist/
+build/
+out/
+.next/
+_site/
+.jekyll-cache/
+.sass-cache/
+
+# Local environment variables
+.env
+.env.*
+!.env.example
+
+# Logs and test output
+*.log
+coverage/
