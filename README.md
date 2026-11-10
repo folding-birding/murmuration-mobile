@@ -34,7 +34,7 @@ The mobile interface follows the Mobile page in Figma: a gradient lookup screen 
 - Permission errors, network failures, malformed data, and server outages retain the ID and offer a retry.
 - Swipe left/right in portrait or up/down in landscape through QR / 3D View / AR, or select the pagination dots. The transition follows the same axis: left/up opens the next view, right/down returns to the previous view. Rotation and double-tap playback use a square centered in the body, excluding the header and footer. Its side equals the smaller of the body's width and height, and updates when the device rotates. Inside this square, horizontal dragging always rotates the bird; swipe in the remaining body whitespace to change slides. Header and footer controls remain accessible. The gesture is determined where the touch starts and stays assigned until release. The rendered bird size is independent of this touch area. Pagination uses left/right arrow keys in portrait and up/down arrow keys in landscape, plus Home and End.
 - In landscape, the header and footer become 60 px side rails, leaving the full height available to the body. The logo stays upright at the top of the header, with download below it and vertical pagination on the opposite side. Secondary landscape orientation swaps the rails; browsers without orientation direction information use the left header. The original top/bottom layout returns in portrait.
-- AR currently shows live camera video only. Opening the tab requests the rear camera when available, without microphone access; front-facing video is mirrored when reported by the device. Leaving AR or hiding the browser stops all tracks. Interrupted or failed camera access can be retried using the restart control. Camera frames are not recorded or uploaded. Rotation keeps the current stream, and the camera area supports the same orientation-dependent page swipes.
+- AR shows live camera video with a MediaPipe hand skeleton overlay. Opening the tab requests the rear camera when available, without microphone access; front-facing video is mirrored when reported by the device. Leaving AR or hiding the browser stops all tracks. Interrupted or failed camera access can be retried using the restart control. Camera frames are not recorded or uploaded. Rotation keeps the current stream, and the camera area supports the same orientation-dependent page swipes.
 - The bird repeats its hover animation. Drag or use arrow keys to turn it. Double-tap or press Enter while focused to hear its birdsong. Leaving the slide stops audio and releases the WebGL scene.
 - The entry screen displays the worker's archived `outputs/qr.svg`, preserving the same QR code as the original ticket without generating a new one in the browser.
 - A failed 3D view can be retried; QR and HTML export remain available.
@@ -97,7 +97,7 @@ The offline runtime is generated during production builds and on demand during d
 src/
   app/       Online lookup, loading, and error screens
   archive/   Entry types, ID validation, and R2 loading
-  camera/    Live camera preview and stream lifecycle
+  camera/    Camera lifecycle, MediaPipe worker, and hand overlay
   entry/     Shared QR/3D presentation, swipes, and birdsong playback
   viewer/    FBX animation, texture rendering, and rotation gestures
   offline/   Standalone HTML export and its independent entry point
@@ -117,3 +117,16 @@ The online app loads an entry through `archive/client.ts` and passes it to `entr
 - `test/`: unit and browser tests, fixtures, configurations, and the HTTPS-aware test runner.
 
 The existing Murmuration model and brand assets are reused. Pretendard's license is included in `public/Pretendard-LICENSE.txt`.
+
+## Hand tracking
+
+The AR tab runs `@mediapipe/tasks-vision` 1.2.2 Hand Landmarker in a module Web Worker, using the CPU/WASM delegate. It detects up to two hands, each with 21 landmarks. Image coordinates align the overlay with the centered camera cover crop; hand-centered world coordinates control the depth cues on the joints. These estimated 3D coordinates are relative to each hand, not a world-anchored AR pose. This version visualizes tracking without attaching the bird or recognizing gestures.
+
+There is no fixed inference FPS cap. The tracker processes the latest available camera frame when idle, with one frame in flight and a 640 px input longest edge. Actual throughput depends on the camera, display refresh, and device performance. The bottom debug overlay shows camera resolution, the transferred inference input resolution, and completed tracking frames per second measured over one-second intervals; it does not show the camera's advertised frame rate. Camera images stay in the browser. The model and WASM are served from the same site, load only on the AR tab, and are excluded from downloaded HTML. Model initialization or inference failures leave the camera active and show a retry icon. Leaving AR or pausing the camera terminates the worker and releases its memory.
+
+- Model: [Google Hand Landmarker, float16 v1](https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task), stored in `src/assets/models/hand_landmarker.task` (about 7.8 MB).
+- Runtime: the pinned npm package supplies the WASM assets; Vite emits them with versioned filenames (about 14.6 MB uncompressed).
+- Reference: [MediaPipe Hand Landmarker documentation](https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker).
+- Test image: [Google MediaPipe thumb-up fixture](https://storage.googleapis.com/mediapipe-assets/thumb_up.jpg), stored in `test/fixtures/hand.jpg` and used for actual model inference in `test/hand-tracking.spec.ts`. It is not shipped to the application.
+
+`npm run test:e2e -- hand-tracking.spec.ts` verifies real hand detection, mirrored and rotated alignment, model-load retry, and worker disposal. Browser tests do not access a physical camera; actual mobile performance and camera permissions should also be checked on the target phone.

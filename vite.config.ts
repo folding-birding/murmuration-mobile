@@ -16,6 +16,7 @@ export default defineConfig(({ command }) => {
     plugins: [react(), offlineExport()],
     server: { https, watch: { ignored: ['**/.certs/**', '**/.qa/**', '**/test-results/**', '**/playwright-report/**'] } },
     preview: { https },
+    worker: { format: 'es' },
     build: {
       rollupOptions: {
         input: { home: resolve('index.html'), entries: resolve('entries/index.html') },

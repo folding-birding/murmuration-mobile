@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { HandTrackingOverlay } from './HandTrackingOverlay'
 import { Icon } from '../ui/Icon'
 import { uiText } from '../ui/ui-text'
 import './camera.css'
@@ -85,6 +86,7 @@ export function CameraView() {
 
   return <div className="camera-view" data-state={status}>
     <video ref={video} className="camera-video" data-mirrored={mirrored} autoPlay muted playsInline aria-hidden="true" />
+    {status === 'ready' && video.current && <HandTrackingOverlay video={video.current} mirrored={mirrored} />}
     {status !== 'ready' && <div className="camera-message" role="status">
       {status === 'loading' ? <span className="spinner" aria-hidden="true" /> : <Icon name="warning" />}
       <span className="sr-only">{uiText.camera[status]}</span>
