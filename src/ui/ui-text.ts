@@ -15,6 +15,11 @@ export const uiText = {
   audioError: 'Unable to play this birdsong. Please try again.',
   qrAlt: 'QR code for this bird',
   qrError: 'Unable to load this QR code. Please reload the page to try again.',
+  exportHtml: {
+    download: 'Download offline HTML',
+    preparing: 'Preparing offline HTML…',
+    failed: 'Unable to save the offline page. Press the download button to try again.',
+  },
   viewer: {
     accessibility: 'Animated paper bird. Drag inside the central square or use arrow keys to turn. Double-tap or press Enter to play birdsong.',
     loading: 'Bringing your bird to life…',
