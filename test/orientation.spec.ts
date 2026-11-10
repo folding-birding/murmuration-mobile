@@ -21,8 +21,8 @@ for (const direction of ['landscape-primary', 'landscape-secondary'] as const) {
     await expect(page.locator('.brand-mark img')).toHaveCSS('transform', 'none')
     expect(await page.locator('.download-button img').boundingBox()).toEqual({ x: reversed ? 518 : 10, y: 270, width: 40, height: 40 })
     await expect(page.getByRole('tablist')).toHaveAttribute('aria-orientation', 'vertical')
-    for (let index = 0; index < 2; index++) {
-      expect(await page.locator('.slide-tabs img').nth(index).boundingBox()).toEqual({ x: reversed ? 24 : 532, y: 143 + index * 22, width: 12, height: 12 })
+    for (let index = 0; index < 3; index++) {
+      expect(await page.locator('.slide-tabs img').nth(index).boundingBox()).toEqual({ x: reversed ? 24 : 532, y: 132 + index * 22, width: 12, height: 12 })
     }
     expect(await page.locator('.bird-preview').boundingBox()).toEqual({ x: 124, y: 0, width: 320, height: 320 })
     await page.screenshot({ path: `.qa/${direction}.png` })

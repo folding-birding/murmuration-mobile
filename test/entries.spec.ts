@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { archive, id, base } from './fixtures/archive'
+import { fakeCamera } from './fixtures/camera'
 
 test('root leads to an accessible ID form without contacting R2', async ({ page }) => {
   const external: string[] = []
@@ -107,9 +108,10 @@ test('mobile layout fits and supports touch rotation and double-tap audio', asyn
   await context.close()
 })
 
-test('Figma mobile frames keep their dimensions and swipe between QR and 3D', async ({ browser }) => {
+test('mobile frames keep their dimensions and swipe through QR, 3D, and AR', async ({ browser }) => {
   const context = await browser.newContext({ viewport: { width: 320, height: 568 }, hasTouch: true, isMobile: true })
   const page = await context.newPage()
+  await fakeCamera(page)
   await archive(page)
   await page.goto('https://127.0.0.1:4000/entries/')
   await page.evaluate(() => document.fonts.ready)
@@ -143,19 +145,24 @@ test('Figma mobile frames keep their dimensions and swipe between QR and 3D', as
   expect(await viewer.screenshot()).not.toEqual(first)
   await page.screenshot({ path: '.qa/figma-3d-320.png' })
   await swipe(240, 70)
-  await expect(entry).toHaveAttribute('data-slide', '1')
-  await expect(page.getByRole('tab')).toHaveCount(2)
+  await expect(entry).toHaveAttribute('data-slide', '2')
+  await expect(page.locator('.camera-view')).toHaveAttribute('data-state', 'ready')
+  await expect(page.getByRole('tab')).toHaveCount(3)
   await expect(page.locator('.entry-header')).toBeVisible()
+  await swipe(240, 70)
+  await expect(entry).toHaveAttribute('data-slide', '2')
+  await swipe(70, 240)
+  await expect(entry).toHaveAttribute('data-slide', '1')
   await swipe(70, 240)
   await expect(entry).toHaveAttribute('data-slide', '0')
   await swipe(70, 240)
   await expect(entry).toHaveAttribute('data-slide', '0')
   await page.getByRole('tab', { name: 'QR', exact: true }).focus()
   await page.keyboard.press('End')
-  await expect(page.getByRole('tab', { name: '3D View', exact: true })).toBeFocused()
-  await expect(entry).toHaveAttribute('data-slide', '1')
+  await expect(page.getByRole('tab', { name: 'AR', exact: true })).toBeFocused()
+  await expect(entry).toHaveAttribute('data-slide', '2')
   await page.keyboard.press('ArrowRight')
-  await expect(entry).toHaveAttribute('data-slide', '1')
+  await expect(entry).toHaveAttribute('data-slide', '2')
   await page.keyboard.press('Home')
   await expect(entry).toHaveAttribute('data-slide', '0')
   await page.getByRole('link', { name: 'Find another bird' }).click()

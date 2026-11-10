@@ -11,7 +11,7 @@ import activeDot from '../assets/mobile/dot-active.svg'
 import inactiveDot from '../assets/mobile/dot-inactive.svg'
 import './entry.css'
 
-const views = [
+const baseViews = [
   { panelId: 'bird-qr', label: text.slides.qr },
   { panelId: 'bird-model', label: text.slides.model },
 ] as const
@@ -20,15 +20,17 @@ interface EntryViewerProps {
   entry: Entry
   extraActions?: ReactNode
   homeHref?: string
+  cameraView?: ReactNode
 }
 
-export function EntryViewer({ entry, extraActions, homeHref }: EntryViewerProps) {
+export function EntryViewer({ entry, extraActions, homeHref, cameraView }: EntryViewerProps) {
   const { metadata, urls } = entry
   const sound = useBirdsong()
   const [slide, setSlide] = useState(0)
   const [qrError, setQrError] = useState(false)
   const orientation = useOrientation()
   const landscape = orientation !== 'portrait'
+  const views = cameraView ? [...baseViews, { panelId: 'bird-camera', label: text.slides.camera }] : baseViews
   const lastSlide = views.length - 1
   const navigate = (index: number) => {
     const next = Math.max(0, Math.min(lastSlide, index))
@@ -70,6 +72,9 @@ export function EntryViewer({ entry, extraActions, homeHref }: EntryViewerProps)
           {slide === 1 && <BirdModelViewer textureUrl={urls.texture} onPlay={sound.play} />}
           {sound.error && <p role="alert" className="audio-error"><Icon name="warning" /><span className="sr-only">{text.audioError}</span></p>}
         </section>
+        {cameraView && <section id="bird-camera" className="entry-panel" role="tabpanel" aria-labelledby="bird-tab-2" aria-hidden={slide !== 2} inert={slide !== 2}>
+          {slide === 2 && cameraView}
+        </section>}
       </div>
     </div>
     <footer className="entry-footer">
