@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run --config test/vitest.config.ts",
     "test:e2e": "node test/run.mjs --config test/playwright.config.ts",
+    "test:live": "node test/run.mjs --config test/live.config.ts",
     "setup:https": "node scripts/setup-https.mjs"
   },
   "dependencies": {

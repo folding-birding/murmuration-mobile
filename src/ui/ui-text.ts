@@ -10,6 +10,15 @@ export const uiText = {
   unavailable: 'The archive could not be reached. Please try again.',
   retry: 'Try again',
   resultTitle: 'Your bird',
+  slides: { navigation: 'Bird views. Swipe outside the central square or choose a view.', qr: 'QR', model: '3D View' },
+  audioLabel: 'Generated birdsong',
+  audioError: 'Unable to play this birdsong. Please try again.',
   qrAlt: 'QR code for this bird',
   qrError: 'Unable to load this QR code. Please reload the page to try again.',
+  viewer: {
+    accessibility: 'Animated paper bird. Drag inside the central square or use arrow keys to turn. Double-tap or press Enter to play birdsong.',
+    loading: 'Bringing your bird to life…',
+    unavailable: 'The 3D view is unavailable.',
+    retry: 'Reload 3D view',
+  },
 } as const
