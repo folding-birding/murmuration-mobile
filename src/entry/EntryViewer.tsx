@@ -9,9 +9,10 @@ import { useOrientation } from './useOrientation'
 import logo from '../assets/mobile/logo-ink.svg'
 import activeDot from '../assets/mobile/dot-active.svg'
 import inactiveDot from '../assets/mobile/dot-inactive.svg'
+import whiteDot from '../assets/mobile/dot-white.svg'
 import './entry.css'
 
-const views = [
+const baseViews = [
   { panelId: 'bird-qr', label: text.slides.qr },
   { panelId: 'bird-model', label: text.slides.model },
 ] as const
@@ -20,15 +21,18 @@ interface EntryViewerProps {
   entry: Entry
   extraActions?: ReactNode
   homeHref?: string
+  cameraView?: ReactNode
 }
 
-export function EntryViewer({ entry, extraActions, homeHref }: EntryViewerProps) {
+export function EntryViewer({ entry, extraActions, homeHref, cameraView }: EntryViewerProps) {
   const { metadata, urls } = entry
   const sound = useBirdsong()
   const [slide, setSlide] = useState(0)
   const [qrError, setQrError] = useState(false)
   const orientation = useOrientation()
   const landscape = orientation !== 'portrait'
+  const views = cameraView ? [...baseViews, { panelId: 'bird-camera', label: text.slides.camera }] : baseViews
+  const cameraActive = views[slide].panelId === 'bird-camera'
   const lastSlide = views.length - 1
   const navigate = (index: number) => {
     const next = Math.max(0, Math.min(lastSlide, index))
@@ -52,11 +56,13 @@ export function EntryViewer({ entry, extraActions, homeHref }: EntryViewerProps)
   const swipeHandlers = useSwipeNavigation(landscape ? 'y' : 'x', direction => navigate(slide + direction))
   const brand = <img src={logo} alt="" width="40" height="40" />
 
-  return <article className="bird-entry" data-slide={slide} data-orientation={orientation} aria-label={text.resultTitle} {...swipeHandlers}>
+  return <article className="bird-entry" data-slide={slide} data-camera={cameraActive} data-orientation={orientation} aria-label={text.resultTitle} {...swipeHandlers}>
     <h1 className="sr-only">{metadata.id}</h1>
     <header className="entry-header">
+      {!cameraActive && <>
       {homeHref ? <a className="brand-mark" href={homeHref} aria-label={text.home}>{brand}</a> : <span className="brand-mark">{brand}</span>}
       {extraActions}
+      </>}
     </header>
     <div className="entry-viewport">
       <div className="entry-track" style={{ transform: `${landscape ? 'translateY' : 'translateX'}(-${slide * 100}%)` }}>
@@ -73,6 +79,9 @@ export function EntryViewer({ entry, extraActions, homeHref }: EntryViewerProps)
           {slide === 1 && <BirdModelViewer textureUrl={urls.texture} onPlay={sound.play} />}
           {sound.error && <p role="alert" className="audio-error"><Icon name="warning" /><span className="sr-only">{text.audioError}</span></p>}
         </section>
+        {cameraView && <section id="bird-camera" className="entry-panel" role="tabpanel" aria-labelledby="bird-tab-2" aria-hidden={slide !== 2} inert={slide !== 2}>
+          {slide === 2 && cameraView}
+        </section>}
       </div>
     </div>
     <footer className="entry-footer">
@@ -81,7 +90,7 @@ export function EntryViewer({ entry, extraActions, homeHref }: EntryViewerProps)
           aria-label={view.label} aria-selected={slide === index} aria-controls={view.panelId}
           tabIndex={slide === index ? 0 : -1} onClick={() => navigate(index)}
           onKeyDown={event => onTabKeyDown(event, index)}>
-          <img src={index === slide ? activeDot : inactiveDot} alt="" width="12" height="12" draggable={false} />
+          <img src={index === slide ? (cameraActive ? whiteDot : activeDot) : (cameraActive ? activeDot : inactiveDot)} alt="" width="12" height="12" draggable={false} />
         </button>)}
       </div>
     </footer>

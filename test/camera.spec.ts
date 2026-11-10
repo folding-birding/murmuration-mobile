@@ -1,0 +1,105 @@
+import { test, expect } from '@playwright/test'
+import { archive, id } from './fixtures/archive'
+import { fakeCamera } from './fixtures/camera'
+
+test.use({ hasTouch: true, isMobile: true })
+
+test.beforeEach(async ({ page }) => {
+  await archive(page)
+  await fakeCamera(page)
+  await page.goto(`/entries/?id=${id}`)
+  await expect(page.getByRole('tab', { name: 'QR', exact: true })).toBeVisible()
+})
+
+test('AR starts only on entry and shows camera video without a model', async ({ page }) => {
+  expect(await page.evaluate(() => window.cameraTest.calls)).toEqual([])
+  await page.getByRole('tab', { name: '3D View', exact: true }).click()
+  await expect(page.locator('.bird-preview')).toHaveAttribute('data-state', 'ready')
+  expect(await page.evaluate(() => window.cameraTest.calls)).toEqual([])
+  await page.getByRole('tab', { name: 'AR', exact: true }).click()
+  await expect(page.locator('.camera-view')).toHaveAttribute('data-state', 'ready')
+  await expect(page.locator('canvas')).toHaveCount(0)
+  await expect(page.locator('video')).toHaveJSProperty('paused', false)
+  await expect(page.locator('video')).toHaveJSProperty('muted', true)
+  await expect(page.locator('video')).toHaveAttribute('playsinline', '')
+  await expect.poll(() => page.locator('video').evaluate((video: HTMLVideoElement) => video.videoWidth)).toBe(640)
+  expect(await page.evaluate(() => window.cameraTest.calls[0])).toMatchObject({ audio: false, video: { facingMode: { ideal: 'environment' } } })
+  await expect(page.locator('audio')).toHaveJSProperty('paused', true)
+  const initialCalls = await page.evaluate(() => window.cameraTest.calls.length)
+  await page.getByRole('tab', { name: 'QR', exact: true }).click()
+  await expect(page.locator('video')).toHaveCount(0)
+  expect(await page.evaluate(() => window.cameraTest.streams.every(stream => stream.getTracks().every(track => track.readyState === 'ended')))).toBe(true)
+  await page.getByRole('tab', { name: 'AR', exact: true }).click()
+  await expect(page.locator('.camera-view')).toHaveAttribute('data-state', 'ready')
+  expect(await page.evaluate(() => window.cameraTest.calls.length)).toBeGreaterThan(initialCalls)
+  expect(await page.evaluate(() => window.cameraTest.streams.flatMap(stream => stream.getTracks()).filter(track => track.readyState === 'live').length)).toBe(1)
+})
+
+for (const mode of ['denied', 'missing'] as const) {
+  test(`camera ${mode} can be retried without blocking navigation`, async ({ page }) => {
+    await page.evaluate(mode => { window.cameraTest.mode = mode }, mode)
+    await page.getByRole('tab', { name: 'AR', exact: true }).click()
+    await expect(page.locator('.camera-view')).toHaveAttribute('data-state', mode)
+    await page.evaluate(() => { window.cameraTest.mode = 'ready'; window.cameraTest.facing = 'user' })
+    await page.getByRole('button', { name: 'Restart camera' }).click()
+    await expect(page.locator('.camera-view')).toHaveAttribute('data-state', 'ready')
+    await expect(page.locator('video')).toHaveCSS('transform', 'matrix(-1, 0, 0, 1, 0, 0)')
+    await page.getByRole('tab', { name: '3D View', exact: true }).click()
+    await expect(page.locator('.bird-preview')).toHaveAttribute('data-state', 'ready')
+    expect(await page.evaluate(() => window.cameraTest.streams.every(stream => stream.getTracks().every(track => track.readyState === 'ended')))).toBe(true)
+  })
+}
+
+test('permission granted after leaving AR immediately stops the late stream', async ({ page }) => {
+  await page.evaluate(() => { window.cameraTest.mode = 'pending' })
+  await page.getByRole('tab', { name: 'AR', exact: true }).click()
+  await expect.poll(() => page.evaluate(() => window.cameraTest.calls.length)).toBeGreaterThan(0)
+  await page.getByRole('tab', { name: 'QR', exact: true }).click()
+  await page.evaluate(() => window.cameraTest.resolve?.())
+  await expect.poll(() => page.evaluate(() => window.cameraTest.streams.length)).toBeGreaterThan(0)
+  expect(await page.evaluate(() => window.cameraTest.streams.every(stream => stream.getTracks().every(track => track.readyState === 'ended')))).toBe(true)
+  await expect(page.locator('video')).toHaveCount(0)
+})
+
+test('rotation preserves the camera and swiping away stops it', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 568 })
+  await page.getByRole('tab', { name: 'AR', exact: true }).click()
+  await expect(page.locator('.camera-view')).toHaveAttribute('data-state', 'ready')
+  await expect(page.locator('.entry-track')).toHaveCSS('transform', 'matrix(1, 0, 0, 1, -640, 0)')
+  expect(await page.locator('video').boundingBox()).toEqual({ x: 0, y: 60, width: 320, height: 448 })
+  await page.screenshot({ path: '.qa/camera-portrait.png' })
+  const initialCalls = await page.evaluate(() => window.cameraTest.calls.length)
+  await page.setViewportSize({ width: 568, height: 320 })
+  await expect(page.locator('.entry-track')).toHaveCSS('transform', 'matrix(1, 0, 0, 1, 0, -640)')
+  expect(await page.locator('video').boundingBox()).toEqual({ x: 60, y: 0, width: 448, height: 320 })
+  expect(await page.evaluate(() => window.cameraTest.calls.length)).toBe(initialCalls)
+  await page.screenshot({ path: '.qa/camera-landscape.png' })
+  const session = await page.context().newCDPSession(page)
+  await session.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: 284, y: 70 }] })
+  for (let step = 1; step <= 5; step++) await session.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: 284, y: 70 + step * 30 }] })
+  await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
+  await expect(page.locator('.bird-entry')).toHaveAttribute('data-slide', '1')
+  expect(await page.evaluate(() => window.cameraTest.streams.every(stream => stream.getTracks().every(track => track.readyState === 'ended')))).toBe(true)
+})
+
+test('backgrounding and camera interruption stop capture until restarted', async ({ page }) => {
+  await page.getByRole('tab', { name: 'AR', exact: true }).click()
+  await expect(page.locator('.camera-view')).toHaveAttribute('data-state', 'ready')
+  const initialCalls = await page.evaluate(() => window.cameraTest.calls.length)
+  await page.evaluate(() => {
+    Object.defineProperty(document, 'hidden', { configurable: true, value: true })
+    document.dispatchEvent(new Event('visibilitychange'))
+  })
+  await expect(page.locator('.camera-view')).toHaveAttribute('data-state', 'paused')
+  expect(await page.evaluate(() => window.cameraTest.streams.every(stream => stream.getTracks().every(track => track.readyState === 'ended')))).toBe(true)
+  await page.evaluate(() => {
+    Object.defineProperty(document, 'hidden', { configurable: true, value: false })
+    document.dispatchEvent(new Event('visibilitychange'))
+  })
+  expect(await page.evaluate(() => window.cameraTest.calls.length)).toBe(initialCalls)
+  await page.getByRole('button', { name: 'Restart camera' }).click()
+  await expect(page.locator('.camera-view')).toHaveAttribute('data-state', 'ready')
+  await page.evaluate(() => window.cameraTest.streams.at(-1)!.getTracks()[0].dispatchEvent(new Event('ended')))
+  await expect(page.locator('.camera-view')).toHaveAttribute('data-state', 'paused')
+  expect(await page.evaluate(() => window.cameraTest.streams.every(stream => stream.getTracks().every(track => track.readyState === 'ended')))).toBe(true)
+})

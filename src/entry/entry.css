@@ -1,4 +1,5 @@
 .bird-entry { height:100%; display:flex; flex-direction:column; overflow:hidden; background:var(--palette-white); touch-action:pan-y; }
+.bird-entry[data-camera=true] { background:var(--palette-black); color:var(--palette-white); }
 .entry-header { flex:none; height:60px; padding:10px; display:flex; align-items:center; justify-content:space-between; }
 .brand-mark,.brand-mark img { display:block; width:40px; height:40px; }
 .entry-viewport { flex:1; min-width:0; min-height:0; overflow:hidden; container-type:size; }
