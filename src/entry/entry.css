@@ -1,0 +1,9 @@
+.bird-entry { height:100%; display:flex; flex-direction:column; overflow:hidden; background:var(--palette-white); }
+.entry-header { flex:none; height:60px; padding:10px; display:flex; align-items:center; justify-content:space-between; }
+.brand-mark,.brand-mark img { display:block; width:40px; height:40px; }
+.entry-viewport { flex:1; min-height:0; overflow:hidden; }
+.entry-track { width:100%; height:100%; display:flex; }
+.entry-panel { position:relative; flex:0 0 100%; min-width:0; height:100%; padding:10px; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+.bird-qr,.bird-qr img { display:block; width:205px; height:205px; }
+.bird-qr p { display:grid; place-items:center; height:100%; }
+.entry-footer { flex:none; height:60px; display:flex; align-items:center; justify-content:center; padding:10px; }
