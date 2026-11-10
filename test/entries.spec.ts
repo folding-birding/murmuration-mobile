@@ -1,36 +1,5 @@
-import { test, expect, type Page } from '@playwright/test'
-import { readFileSync } from 'node:fs'
-
-const id = '20261110123456'
-const guid = '550e8400-e29b-41d4-a716-446655440000'
-const metadata = { id, guid, createdAt: '2026-11-10T12:34:56Z', updatedAt: '2026-11-10T12:40:00Z' }
-const base = 'https://archive.example.org'
-const qr = readFileSync(new URL('./fixtures/qr.svg', import.meta.url), 'utf8')
-const texture = '<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"><defs><pattern id="p" width="32" height="32" patternUnits="userSpaceOnUse"><rect width="32" height="32" fill="#f7e9b2"/><circle cx="16" cy="16" r="10" fill="#ef765b"/></pattern></defs><rect width="256" height="256" fill="url(#p)"/></svg>'
-function wav() {
-  const sampleRate = 8000, samples = sampleRate * 3
-  const bytes = Buffer.alloc(44 + samples * 2)
-  bytes.write('RIFF'); bytes.writeUInt32LE(bytes.length - 8, 4); bytes.write('WAVEfmt ', 8)
-  bytes.writeUInt32LE(16, 16); bytes.writeUInt16LE(1, 20); bytes.writeUInt16LE(1, 22)
-  bytes.writeUInt32LE(sampleRate, 24); bytes.writeUInt32LE(sampleRate * 2, 28)
-  bytes.writeUInt16LE(2, 32); bytes.writeUInt16LE(16, 34); bytes.write('data', 36); bytes.writeUInt32LE(samples * 2, 40)
-  for (let n = 0; n < samples; n++) bytes.writeInt16LE(Math.round(Math.sin(n * Math.PI * 2 * 440 / sampleRate) * 2000), 44 + n * 2)
-  return bytes
-}
-async function archive(page: Page, manifestStatus = 200, exists = true) {
-  await page.route('**/site-config.json', route => route.fulfill({ json: { r2BaseUrl: base } }))
-  await page.route(`${base}/**`, async route => {
-    const path = new URL(route.request().url()).pathname
-    const headers = { 'Access-Control-Allow-Origin': '*' }
-    if (path.endsWith('/manifest.json')) return route.fulfill({ status: manifestStatus, headers, json: exists ? [{ id, guid }] : [] })
-    if (path.endsWith('/metadata.json')) return route.fulfill({ headers, json: metadata })
-    if (path.endsWith('/colors.json')) return route.fulfill({ headers, json: { colors: [{ region: 'head', hex: '#ef765b' }, { region: 'wing', hex: '#f7e9b2' }] } })
-    if (path.endsWith('/texture.png')) return route.fulfill({ headers, contentType: 'image/svg+xml', body: texture })
-    if (path.endsWith('/audio.wav')) return route.fulfill({ headers, contentType: 'audio/wav', body: wav() })
-    if (path.endsWith('/qr.svg')) return route.fulfill({ headers, contentType: 'image/svg+xml', body: qr })
-    return route.fulfill({ status: 404, headers })
-  })
-}
+import { test, expect } from '@playwright/test'
+import { archive, id, base } from './fixtures/archive'
 
 test('root leads to an accessible ID form without contacting R2', async ({ page }) => {
   const external: string[] = []
@@ -217,10 +186,13 @@ for (const viewport of [
       const viewer = page.locator('.bird-preview')
       const entry = page.locator('.bird-entry')
       const session = await context.newCDPSession(page)
+      const landscape = viewport.width > viewport.height
+      const bodyWidth = viewport.width - (landscape ? 120 : 0)
+      const bodyHeight = viewport.height - (landscape ? 0 : 120)
       async function showModel() {
         await page.getByRole('tab', { name: '3D View', exact: true }).click()
         await expect(viewer).toHaveAttribute('data-state', 'ready', { timeout: 30_000 })
-        await expect(page.locator('.entry-track')).toHaveCSS('transform', `matrix(1, 0, 0, 1, -${viewport.width}, 0)`)
+        await expect(page.locator('.entry-track')).toHaveCSS('transform', landscape ? `matrix(1, 0, 0, 1, 0, -${bodyHeight})` : `matrix(1, 0, 0, 1, -${bodyWidth}, 0)`)
       }
       async function gesture(x: number, y: number, endX: number, endY = y) {
         await session.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] })
@@ -230,16 +202,16 @@ for (const viewport of [
         await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
       }
       await showModel()
-      const bodyHeight = viewport.height - 120
-      const side = Math.min(viewport.width, bodyHeight)
+      const side = Math.min(bodyWidth, bodyHeight)
       const left = (viewport.width - side) / 2
-      const top = 60 + (bodyHeight - side) / 2
-      const portrait = viewport.width <= bodyHeight
+      const top = (viewport.height - side) / 2
+      const portrait = bodyWidth <= bodyHeight
       expect(await viewer.boundingBox()).toEqual({ x: left, y: top, width: side, height: side })
       expect((await page.locator('canvas').boundingBox())!.width).toBe(side - 48)
       const yaw = await viewer.getAttribute('data-yaw')
       // Rotation remains assigned after the touch crosses the square boundary.
-      await gesture(left + 10, top + 10, left + 130, top - 10)
+      if (portrait) await gesture(left + 10, top + 10, left + 130, top - 10)
+      else await gesture(left + side - 10, top + 100, left + side + 30)
       await expect(viewer).not.toHaveAttribute('data-yaw', yaw!)
       await expect(entry).toHaveAttribute('data-slide', '1')
       await page.touchscreen.tap(viewport.width / 2, viewport.height / 2)
@@ -247,21 +219,23 @@ for (const viewport of [
       await expect(page.locator('audio')).toHaveJSProperty('paused', false)
       // Navigation remains assigned after a touch enters the square from body whitespace.
       if (portrait) await gesture(60, top - 16, viewport.width - 60, top + 16)
-      else await gesture(left - 16, viewport.height / 2, left + 100)
+      else await gesture(left - 16, 60, left + 16, viewport.height - 60)
       await expect(entry).toHaveAttribute('data-slide', '0')
       await expect(page.locator('audio')).toHaveJSProperty('paused', true)
       await showModel()
-      if (portrait) await gesture(viewport.width - 60, top + side + 16, 60)
-      else await gesture(left + side + 16, viewport.height / 2, left - 16)
-      await expect(entry).toHaveAttribute('data-slide', '1')
+      if (portrait) await gesture(60, top + side + 16, viewport.width - 60)
+      else await gesture(left + side + 16, 60, left + side + 16, viewport.height - 60)
+      await expect(entry).toHaveAttribute('data-slide', '0')
+      await showModel()
       await page.screenshot({ path: `.qa/body-square-${viewport.width}x${viewport.height}.png` })
       // The square resizes when the device rotates without reloading the model.
       const rotated = { width: viewport.height, height: viewport.width }
       await page.setViewportSize(rotated)
-      const rotatedSide = Math.min(rotated.width, rotated.height - 120)
+      const rotatedLandscape = rotated.width > rotated.height
+      const rotatedSide = Math.min(rotated.width - (rotatedLandscape ? 120 : 0), rotated.height - (rotatedLandscape ? 0 : 120))
       await expect.poll(() => viewer.boundingBox()).toEqual({
         x: (rotated.width - rotatedSide) / 2,
-        y: 60 + (rotated.height - 120 - rotatedSide) / 2,
+        y: (rotated.height - rotatedSide) / 2,
         width: rotatedSide, height: rotatedSide,
       })
       await expect(viewer).toHaveAttribute('data-state', 'ready')
