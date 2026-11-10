@@ -2,6 +2,7 @@ import { resolve } from 'node:path'
 import { existsSync, readFileSync } from 'node:fs'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { offlineExport } from './tooling/offline-plugin'
 
 export default defineConfig(({ command }) => {
   const keyPath = resolve('.certs/localhost-key.pem')
@@ -12,7 +13,7 @@ export default defineConfig(({ command }) => {
   const https = command === 'serve' ? { key: readFileSync(keyPath), cert: readFileSync(certPath) } : undefined
   return {
     base: process.env.VITE_BASE_PATH || '/',
-    plugins: [react()],
+    plugins: [react(), offlineExport()],
     server: { https, watch: { ignored: ['**/.certs/**', '**/.qa/**', '**/test-results/**', '**/playwright-report/**'] } },
     preview: { https },
     build: {

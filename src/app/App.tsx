@@ -3,6 +3,7 @@ import { EntryNotFound, loadConfiguredEntry } from '../archive/client'
 import { validId } from '../archive/id'
 import type { Entry } from '../archive/types'
 import { EntryViewer } from '../entry/EntryViewer'
+import { ExportHtmlButton } from '../offline/ExportHtmlButton'
 import { uiText as text } from '../ui/ui-text'
 import { Icon } from '../ui/Icon'
 import { Lookup } from './Lookup'
@@ -29,7 +30,7 @@ export default function App() {
     return () => controller.abort()
   }, [attempt])
   return <div className="page">
-    <main>{!requestedId && !invalidQuery ? <Lookup entriesPath={entriesPath} /> : entry ? <EntryViewer entry={entry} homeHref={entriesPath} />
+    <main>{!requestedId && !invalidQuery ? <Lookup entriesPath={entriesPath} /> : entry ? <EntryViewer entry={entry} homeHref={entriesPath} extraActions={<ExportHtmlButton entry={entry} />} />
       : <section className="status-panel" aria-live="polite">
         {failed ? <Icon name="warning" /> : <span className="spinner" aria-hidden="true" />}
         <h1 className="sr-only">{failed ? text.unavailable : text.loading}</h1>

@@ -1,0 +1,6 @@
+.html-export { position:relative; }
+.download-button { display:grid; place-items:center; width:40px; height:40px; padding:0; border:0; border-radius:50%; background:var(--palette-natural); }
+.download-button img { display:block; }
+.html-export .spinner { width:24px; height:24px; }
+.html-export button:disabled { cursor:progress; }
+.export-error { position:absolute; top:44px; right:8px; }

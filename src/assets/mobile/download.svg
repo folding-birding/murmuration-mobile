@@ -1,0 +1,9 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Group 2">
+<circle id="Ellipse 2" cx="20" cy="20" r="20" fill="#F6F7F9"/>
+<g id="Group 3">
+<path id="Vector 1" d="M21 8C21 7.44772 20.5523 7 20 7C19.4477 7 19 7.44772 19 8L20 8L21 8ZM20 8L19 8L19 28L20 28L21 28L21 8L20 8ZM19.2929 28.7071C19.6834 29.0976 20.3166 29.0976 20.7071 28.7071L27.0711 22.3431C27.4616 21.9526 27.4616 21.3195 27.0711 20.9289C26.6805 20.5384 26.0474 20.5384 25.6569 20.9289L20 26.5858L14.3431 20.9289C13.9526 20.5384 13.3195 20.5384 12.9289 20.9289C12.5384 21.3195 12.5384 21.9526 12.9289 22.3431L19.2929 28.7071Z" fill="#6E7686"/>
+<path id="Vector 2" d="M10 33H30" stroke-width="2" stroke-linecap="round" stroke="#6E7686"/>
+</g>
+</g>
+</svg>

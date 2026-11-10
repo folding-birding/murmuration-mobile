@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import type { Entry } from '../archive/types'
 import { BirdModelViewer } from '../viewer/BirdModelViewer'
 import { uiText as text } from '../ui/ui-text'
@@ -17,10 +17,11 @@ const views = [
 
 interface EntryViewerProps {
   entry: Entry
+  extraActions?: ReactNode
   homeHref?: string
 }
 
-export function EntryViewer({ entry, homeHref }: EntryViewerProps) {
+export function EntryViewer({ entry, extraActions, homeHref }: EntryViewerProps) {
   const { metadata, urls } = entry
   const sound = useBirdsong()
   const [slide, setSlide] = useState(0)
@@ -37,6 +38,7 @@ export function EntryViewer({ entry, homeHref }: EntryViewerProps) {
     <h1 className="sr-only">{metadata.id}</h1>
     <header className="entry-header">
       {homeHref ? <a className="brand-mark" href={homeHref} aria-label={text.home}>{brand}</a> : <span className="brand-mark">{brand}</span>}
+      {extraActions}
     </header>
     <div className="entry-viewport">
       <div className="entry-track" style={{ transform: `translateX(-${slide * 100}%)` }}>
