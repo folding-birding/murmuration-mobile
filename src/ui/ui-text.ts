@@ -1,0 +1,15 @@
+export const uiText = {
+  home: 'Find another bird',
+  lookupTitle: 'Find your bird',
+  idLabel: 'Bird ID',
+  idPlaceholder: 'YYYYMMDDHHmmss',
+  idHint: 'Enter the 14-digit ID printed on your ticket.',
+  invalidId: 'Enter a valid 14-digit bird ID.',
+  find: 'Find my bird',
+  loading: 'Finding your bird…',
+  unavailable: 'The archive could not be reached. Please try again.',
+  retry: 'Try again',
+  resultTitle: 'Your bird',
+  qrAlt: 'QR code for this bird',
+  qrError: 'Unable to load this QR code. Please reload the page to try again.',
+} as const

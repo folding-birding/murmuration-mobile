@@ -1,0 +1,20 @@
+@font-face { font-family:Pretendard; src:url('../assets/fonts/Pretendard-Regular.woff2') format('woff2'); font-weight:400; font-display:swap; }
+@font-face { font-family:Pretendard; src:url('../assets/fonts/Pretendard-Bold.woff2') format('woff2'); font-weight:700; font-display:swap; }
+* { box-sizing:border-box; }
+:root { font-family:var(--font-family); color:var(--palette-ink); background:var(--palette-white); font-synthesis:none; }
+body { margin:0; min-width:320px; }
+button,input { font:inherit; }
+button,a,input { -webkit-tap-highlight-color:transparent; }
+button { cursor:pointer; }
+a { color:inherit; text-decoration:none; }
+button:focus-visible,a:focus-visible,input:focus-visible,[tabindex]:focus-visible { outline:2px solid currentColor; outline-offset:2px; }
+h1,h2,p { margin:0; }
+.sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+.page,main { width:100%; height:100svh; height:100dvh; min-height:320px; }
+.icon { display:block; flex:none; }
+.icon-button { display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; padding:8px; border:0; border-radius:50%; background:var(--palette-natural); color:var(--palette-gray); }
+.error { display:flex; justify-content:center; margin:12px 0; }
+.status-panel { height:100%; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:28px; }
+.spinner { display:block; width:32px; height:32px; border:3px solid var(--palette-ligihtgray); border-top-color:var(--palette-gray); border-radius:50%; animation:spin 1s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+@media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; transition:none!important; } }
