@@ -1,10 +1,11 @@
-import { useState, type ReactNode } from 'react'
+import { useState, type KeyboardEvent, type ReactNode } from 'react'
 import type { Entry } from '../archive/types'
 import { BirdModelViewer } from '../viewer/BirdModelViewer'
 import { uiText as text } from '../ui/ui-text'
 import { Icon } from '../ui/Icon'
 import { useBirdsong } from './useBirdsong'
 import { useSwipeNavigation } from './useSwipeNavigation'
+import { useOrientation } from './useOrientation'
 import logo from '../assets/mobile/logo-ink.svg'
 import activeDot from '../assets/mobile/dot-active.svg'
 import inactiveDot from '../assets/mobile/dot-inactive.svg'
@@ -26,22 +27,39 @@ export function EntryViewer({ entry, extraActions, homeHref }: EntryViewerProps)
   const sound = useBirdsong()
   const [slide, setSlide] = useState(0)
   const [qrError, setQrError] = useState(false)
+  const orientation = useOrientation()
+  const landscape = orientation !== 'portrait'
   const lastSlide = views.length - 1
   const navigate = (index: number) => {
-    setSlide(Math.max(0, Math.min(lastSlide, index)))
+    const next = Math.max(0, Math.min(lastSlide, index))
+    setSlide(next)
     sound.pause()
+    return next
   }
-  const swipeHandlers = useSwipeNavigation(direction => navigate(slide + direction))
+  const onTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    let next: number
+    switch (event.key) {
+      case landscape ? 'ArrowDown' : 'ArrowRight': next = index + 1; break
+      case landscape ? 'ArrowUp' : 'ArrowLeft': next = index - 1; break
+      case 'Home': next = 0; break
+      case 'End': next = lastSlide; break
+      default: return
+    }
+    event.preventDefault()
+    const selected = navigate(next)
+    document.getElementById(`bird-tab-${selected}`)?.focus()
+  }
+  const swipeHandlers = useSwipeNavigation(landscape ? 'y' : 'x', direction => navigate(slide + direction))
   const brand = <img src={logo} alt="" width="40" height="40" />
 
-  return <article className="bird-entry" data-slide={slide} aria-label={text.resultTitle} {...swipeHandlers}>
+  return <article className="bird-entry" data-slide={slide} data-orientation={orientation} aria-label={text.resultTitle} {...swipeHandlers}>
     <h1 className="sr-only">{metadata.id}</h1>
     <header className="entry-header">
       {homeHref ? <a className="brand-mark" href={homeHref} aria-label={text.home}>{brand}</a> : <span className="brand-mark">{brand}</span>}
       {extraActions}
     </header>
     <div className="entry-viewport">
-      <div className="entry-track" style={{ transform: `translateX(-${slide * 100}%)` }}>
+      <div className="entry-track" style={{ transform: `${landscape ? 'translateY' : 'translateX'}(-${slide * 100}%)` }}>
         <section id={views[0].panelId} className="entry-panel" role="tabpanel" aria-labelledby="bird-tab-0" aria-hidden={slide !== 0} inert={slide !== 0}>
           <div className="bird-qr">
             {qrError ? <p role="status"><Icon name="warning" /><span className="sr-only">{text.qrError}</span></p>
@@ -55,17 +73,11 @@ export function EntryViewer({ entry, extraActions, homeHref }: EntryViewerProps)
       </div>
     </div>
     <footer className="entry-footer">
-      <div role="tablist" aria-label={text.slides.navigation} className="slide-tabs">
+      <div role="tablist" aria-label={text.slides.navigation} aria-orientation={landscape ? 'vertical' : 'horizontal'} className="slide-tabs">
         {views.map((view, index) => <button key={view.panelId} id={`bird-tab-${index}`} type="button" role="tab"
           aria-label={view.label} aria-selected={slide === index} aria-controls={view.panelId}
           tabIndex={slide === index ? 0 : -1} onClick={() => navigate(index)}
-          onKeyDown={event => {
-            const next = event.key === 'ArrowRight' ? Math.min(lastSlide, index + 1) : event.key === 'ArrowLeft' ? Math.max(0, index - 1) : event.key === 'Home' ? 0 : event.key === 'End' ? lastSlide : null
-            if (next === null) return
-            event.preventDefault()
-            navigate(next)
-            document.getElementById(`bird-tab-${next}`)?.focus()
-          }}>
+          onKeyDown={event => onTabKeyDown(event, index)}>
           <img src={index === slide ? activeDot : inactiveDot} alt="" width="12" height="12" draggable={false} />
         </button>)}
       </div>

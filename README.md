@@ -25,19 +25,20 @@ Local development and preview servers both use HTTPS on port 4000. Certificates 
 
 ## Behavior
 
-The mobile interface follows the WebXR page in Figma: a gradient lookup screen with a centered white logo, followed by QR and 3D View slides. The 320 x 568 reference uses a 160 px lookup logo, a 256 x 32 px input row, 60 px result headers and footers, and a 205 px QR image. Icons and two pagination dots provide navigation. Accessible names and screen-reader descriptions remain centralized in `src/ui/ui-text.ts`; no separate language route is needed.
+The mobile interface follows the Mobile page in Figma: a gradient lookup screen with a centered white logo, followed by QR and 3D View slides. The 320 x 568 reference uses a 160 px lookup logo, a 256 x 32 px input row, 60 px result headers and footers, and a 205 px QR image. Icons and two pagination dots provide navigation. Accessible names and screen-reader descriptions remain centralized in `src/ui/ui-text.ts`; no separate language route is needed.
 
 - `/` redirects to `/entries/`.
 - `/entries/` shows the ID input form.
 - A valid `?id=` loads the published ID/GUID pair, metadata, texture, birdsong, and optional colors.
-- Invalid, duplicate, or unpublished IDs return to `/entries/` with the query removed. Missing metadata does the same.
+- Invalid IDs, repeated `id` query parameters, or unpublished IDs return to `/entries/` with the query removed. Missing metadata does the same. Duplicate IDs in the archive manifest are treated as an archive error and retain the query for retry.
 - Permission errors, network failures, malformed data, and server outages retain the ID and offer a retry.
-- Swipe horizontally through QR / 3D View, or select the pagination dots. Rotation and double-tap playback use a square centered in the body, excluding the header and footer. Its side equals the smaller of the body's width and height, and updates when the device rotates. Swipe in the remaining body whitespace to change slides: above/below the square in portrait layouts, or left/right in landscape layouts. Header and footer controls remain accessible. The gesture is determined where the touch starts and stays assigned until release. The rendered bird size is independent of this touch area. Pagination supports arrow keys, Home, and End.
+- Swipe left/right in portrait or up/down in landscape through QR / 3D View, or select the pagination dots. The transition follows the same axis: left/up opens the next view, right/down returns to the previous view. Rotation and double-tap playback use a square centered in the body, excluding the header and footer. Its side equals the smaller of the body's width and height, and updates when the device rotates. Inside this square, horizontal dragging always rotates the bird; swipe in the remaining body whitespace to change slides. Header and footer controls remain accessible. The gesture is determined where the touch starts and stays assigned until release. The rendered bird size is independent of this touch area. Pagination uses left/right arrow keys in portrait and up/down arrow keys in landscape, plus Home and End.
+- In landscape, the header and footer become 60 px side rails, leaving the full height available to the body. The logo stays upright at the top of the header, with download below it and vertical pagination on the opposite side. Secondary landscape orientation swaps the rails; browsers without orientation direction information use the left header. The original top/bottom layout returns in portrait.
 - The bird repeats its hover animation. Drag or use arrow keys to turn it. Double-tap or press Enter while focused to hear its birdsong. Leaving the slide stops audio and releases the WebGL scene.
 - The entry screen displays the worker's archived `outputs/qr.svg`, preserving the same QR code as the original ticket without generating a new one in the browser.
 - A failed 3D view can be retried; QR and HTML export remain available.
 - Output URLs include `updatedAt` to refresh regenerated files while retaining the same ID.
-- The top-right download button saves `murmuration-{id}.html`. This standalone file embeds the texture, WAV, QR, colors, metadata, animated FBX, viewer code, styles, and fonts. It works offline when opened in a browser that supports JavaScript and WebGL. The QR still encodes the original public page address. Generic file-preview apps may not execute the viewer.
+- The header's download button saves `murmuration-{id}.html`. This standalone file embeds the texture, WAV, QR, colors, metadata, animated FBX, viewer code, styles, and fonts. It works offline when opened in a browser that supports JavaScript and WebGL. The QR still encodes the original public page address. Generic file-preview apps may not execute the viewer.
 
 ## R2 layout
 
@@ -85,7 +86,7 @@ After uploading a completed bird to R2, run `npm run build` and `npm run test:li
 
 `npm run test:offline` verifies standalone exports against the public archive. It reuses a running local server on port 4000 or starts a preview server, downloads an HTML file, and opens it from disk in a fresh offline browser context. It compares embedded media hashes with R2 originals, checks animation and playback, and rejects any HTTP requests. Files and screenshots are saved under `.qa/offline/`.
 
-Downloaded HTML is view-only: neither the download button and its icon nor the HTML export handler is included. Both QR and 3D views omit download controls entirely.
+Downloaded HTML is view-only: neither the download button and its icon nor the HTML export handler is included. It retains the QR and 3D views with responsive side rails, without download controls.
 
 The offline runtime is generated during production builds and on demand during development. It is fetched only when exporting, so its embedded model and fonts do not increase the initial lookup download. Generated HTML files contain several megabytes of embedded assets and preserve the data as it was downloaded.
 

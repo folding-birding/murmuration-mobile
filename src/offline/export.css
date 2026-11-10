@@ -4,3 +4,4 @@
 .html-export .spinner { width:24px; height:24px; }
 .html-export button:disabled { cursor:progress; }
 .export-error { position:absolute; top:44px; right:8px; }
+@media (orientation:landscape) { .export-error { top:auto; bottom:44px; } }
