@@ -1,0 +1,4 @@
+.bird-preview { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:min(100cqw,100cqh); aspect-ratio:1; display:grid; place-items:center; cursor:grab; touch-action:none; }
+.bird-preview:active { cursor:grabbing; }
+.bird-model-canvas { width:min(560px,calc(100cqw - 48px),calc(100cqh - 48px)); aspect-ratio:1; height:auto; display:block; }
+.bird-model-message { position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:20px; padding:24px; }
