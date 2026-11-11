@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { renderHtml } from '../src/offline/export'
+import { renderHtml as serializeHtml } from '../src/offline/export'
 import type { Entry } from '../src/archive/types'
 
 const entry: Entry = {
@@ -7,9 +7,15 @@ const entry: Entry = {
   colors: [],
   urls: { texture: 'data:image/png;base64,AA==', audio: 'data:audio/wav;base64,AA==', qr: 'data:image/svg+xml;base64,AA==' },
 }
+const sourceUrl = 'https://example.com/entries/?id=20260619115959'
+const renderHtml = (entry: Entry, runtime: Parameters<typeof serializeHtml>[1]) => serializeHtml(entry, runtime, sourceUrl)
 const runtime = { script: 'window.ready = true;', css: 'body{color:black}', notices: 'Font and library licenses' }
 
 describe('standalone HTML serialization', () => {
+  it('preserves the original page URL and rejects executable link protocols', () => {
+    expect(renderHtml(entry, runtime)).toContain(sourceUrl)
+    expect(() => serializeHtml(entry, runtime, 'javascript:alert(1)')).toThrow('Invalid online entry URL')
+  })
   it('embeds data, styles, and code while blocking external resource requests', () => {
     const html = renderHtml(entry, runtime)
     expect(html).toContain('id="bird-data"')
@@ -18,6 +24,10 @@ describe('standalone HTML serialization', () => {
     expect(html).toContain(runtime.css)
     expect(html).toContain("default-src 'none'")
     expect(html).not.toContain('src="http')
+    expect(html).not.toContain("worker-src blob:")
+    expect(html).not.toContain("'wasm-unsafe-eval'")
+    expect(html).toContain('connect-src data: blob:')
+    expect(html).not.toContain("'unsafe-eval'")
   })
   it('rejects incomplete exports that still reference remote media', () => {
     expect(() => renderHtml({ ...entry, urls: { ...entry.urls, texture: 'https://example.com/texture.png' } }, runtime)).toThrow('must be embedded')

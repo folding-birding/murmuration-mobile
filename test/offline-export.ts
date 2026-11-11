@@ -79,7 +79,7 @@ test('downloaded HTML works in a fresh browser context with the network disabled
     await expect.poll(() => offline.locator('audio').evaluate((audio: HTMLAudioElement) => audio.currentTime)).toBeGreaterThan(0)
     await offline.getByRole('tab', { name: 'QR', exact: true }).click()
     await expect(offline.locator('audio')).toHaveJSProperty('paused', true)
-    await expect(offline.getByRole('tab')).toHaveCount(2)
+    await expect(offline.getByRole('tab')).toHaveCount(3)
     await offline.getByRole('tab', { name: '3D View', exact: true }).click()
     await expect(viewer).toHaveAttribute('data-state', 'ready')
     expect(await offline.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)

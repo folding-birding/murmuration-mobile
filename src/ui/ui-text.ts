@@ -21,7 +21,7 @@ export const uiText = {
     denied: 'Camera access was denied. Allow access in your browser settings and try again.',
     missing: 'No camera is available on this device.',
     failed: 'The camera could not start. Close other camera apps and try again.',
-    unsupported: 'Camera access requires a supported browser and HTTPS.',
+    unsupported: 'Camera access requires a supported browser and a secure page or trusted local file.',
     retry: 'Restart camera',
   },
   tracking: {

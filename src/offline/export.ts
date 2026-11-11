@@ -1,12 +1,17 @@
 import { validId } from '../archive/id'
 import type { Entry } from '../archive/types'
+import type { OfflineEntry } from './types'
 
 interface Runtime { script: string; css: string; notices: string }
 
-export function renderHtml(entry: Entry, runtime: Runtime): string {
+export function renderHtml(entry: Entry, runtime: Runtime, sourceUrl: string): string {
   if (!validId(entry.metadata.id)) throw new Error('Invalid bird ID')
   if (Object.values(entry.urls).some(url => !url.startsWith('data:'))) throw new Error('Offline media must be embedded')
-  const json = JSON.stringify(entry).replace(/</g, '\\u003c')
+  const source = new URL(sourceUrl)
+  if (!['https:', 'http:'].includes(source.protocol)) throw new Error('Invalid online entry URL')
+  source.searchParams.set('id', entry.metadata.id)
+  const payload: OfflineEntry = { ...entry, sourceUrl: source.href }
+  const json = JSON.stringify(payload).replace(/</g, '\\u003c')
   const script = runtime.script.replace(/<\/script/gi, '<\\/script')
   const css = runtime.css.replace(/<\/style/gi, '<\\/style')
   const notices = JSON.stringify(runtime.notices).replace(/</g, '\\u003c')
@@ -33,6 +38,9 @@ async function embed(url: string, signal: AbortSignal): Promise<string> {
 }
 
 export async function createOfflineHtml(entry: Entry, signal: AbortSignal): Promise<Blob> {
+  const source = new URL(window.location.href)
+  source.search = ''
+  source.hash = ''
   const [response, texture, audio, qr] = await Promise.all([
     fetch(`${import.meta.env.BASE_URL}offline-runtime.json`, { signal, cache: 'no-cache' }),
     embed(entry.urls.texture, signal), embed(entry.urls.audio, signal), embed(entry.urls.qr, signal),
@@ -41,5 +49,5 @@ export async function createOfflineHtml(entry: Entry, signal: AbortSignal): Prom
   const runtime = await response.json() as Runtime
   if (typeof runtime.script !== 'string' || typeof runtime.css !== 'string' || typeof runtime.notices !== 'string') throw new Error('Invalid offline viewer')
   signal.throwIfAborted()
-  return new Blob([renderHtml({ ...entry, urls: { texture, audio, qr } }, runtime)], { type: 'text/html;charset=utf-8' })
+  return new Blob([renderHtml({ ...entry, urls: { texture, audio, qr } }, runtime, source.href)], { type: 'text/html;charset=utf-8' })
 }
