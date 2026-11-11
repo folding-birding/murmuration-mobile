@@ -1,3 +1,4 @@
+import { showDebug } from './fixtures/debug'
 import { test, expect } from '@playwright/test'
 import { archive, id } from './fixtures/archive'
 import { fakeCamera } from './fixtures/camera'
@@ -16,6 +17,7 @@ for (const facing of ['environment', 'user'] as const) {
     await page.goto(`/entries/?id=${id}`)
     await page.evaluate(facing => { window.cameraTest.facing = facing; window.orientationTest.beta = 90 }, facing)
     await page.getByRole('tab', { name: 'AR', exact: true }).click()
+    await showDebug(page)
     const debug = page.locator('.debug-frame')
     await expect(debug).toHaveCount(1)
     for (const selector of ['.hand-overlay', '.tracking-debug', '.vector-debug', '[data-gesture=open]', '[data-vector=normal]', '[data-vector=up]']) {
@@ -62,6 +64,7 @@ test('missing sensor data leaves the palm normal visible without fabricating gra
   await page.goto(`/entries/?id=${id}`)
   await page.evaluate(() => { window.orientationTest.enabled = false })
   await page.getByRole('tab', { name: 'AR', exact: true }).click()
+  await showDebug(page)
   await expect(page.locator('.hand-overlay')).toHaveAttribute('data-hands', '1', { timeout: 40_000 })
   await expect(page.locator('.gravity-status')).toHaveAttribute('data-state', 'unavailable', { timeout: 6000 })
   await expect(page.locator('[data-vector=normal]')).toBeVisible()
@@ -81,6 +84,7 @@ test('normal, gesture and Hand label share the accepted side through classificat
   await fakeHandTracker(page, right)
   await page.goto(`/entries/?id=${id}`)
   await page.getByRole('tab', { name: 'AR', exact: true }).click()
+  await showDebug(page)
   const side = page.locator('[data-metric=handedness]')
   const normal = page.locator('[data-metric=normal]')
   const marker = page.locator('[data-gesture=open]')

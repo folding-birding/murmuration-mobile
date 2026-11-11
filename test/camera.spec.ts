@@ -19,7 +19,7 @@ test('AR starts only on entry and keeps the camera active without a hand', async
   await page.getByRole('tab', { name: 'AR', exact: true }).click()
   await expect(page.locator('.camera-view')).toHaveAttribute('data-state', 'ready')
   await expect(page.locator('.bird-preview')).toHaveCount(0)
-  await expect(page.locator('.hand-overlay')).toHaveCount(1)
+  await expect(page.locator('.debug-frame, .tracking-toggle')).toHaveCount(0)
   await expect(page.locator('video')).toHaveJSProperty('paused', false)
   await expect(page.locator('video')).toHaveJSProperty('muted', true)
   await expect(page.locator('video')).toHaveAttribute('playsinline', '')

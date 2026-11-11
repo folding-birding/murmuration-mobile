@@ -1,3 +1,4 @@
+import { showDebug } from './fixtures/debug'
 import { test, expect } from '@playwright/test'
 import { archive, id } from './fixtures/archive'
 import { fakeCamera } from './fixtures/camera'
@@ -13,6 +14,7 @@ test('MediaPipe detects a real hand, aligns the overlay, and stops on exit', asy
   expect(page.workers()).toHaveLength(0)
   await page.evaluate(() => { window.cameraTest.facing = 'user' })
   await page.getByRole('tab', { name: 'AR', exact: true }).click()
+  await showDebug(page)
   const overlay = page.locator('.hand-overlay')
   await expect(overlay).toHaveAttribute('data-state', 'ready', { timeout: 40_000 })
   await expect(overlay).toHaveAttribute('data-hands', '1', { timeout: 15_000 })
@@ -61,6 +63,7 @@ test('model loading failure leaves the camera active and supports retry', async 
   await page.route('**/*.task*', route => fail ? route.abort() : route.continue())
   await page.goto(`/entries/?id=${id}`)
   await page.getByRole('tab', { name: 'AR', exact: true }).click()
+  await showDebug(page)
   await expect(page.locator('.hand-overlay')).toHaveAttribute('data-state', 'failed', { timeout: 40_000 })
   await expect(page.locator('video')).toHaveJSProperty('paused', false)
   await expect.poll(() => page.workers().length).toBe(0)
@@ -80,6 +83,7 @@ test('unsupported frame capture fails gracefully without stopping the camera', a
   page.on('pageerror', error => errors.push(error.message))
   await page.goto(`/entries/?id=${id}`)
   await page.getByRole('tab', { name: 'AR', exact: true }).click()
+  await showDebug(page)
   await expect(page.locator('.hand-overlay')).toHaveAttribute('data-state', 'failed', { timeout: 40_000 })
   await expect(page.locator('video')).toHaveJSProperty('paused', false)
   await expect.poll(() => page.workers().length).toBe(0)
@@ -93,6 +97,7 @@ test('CPU/GPU toggle replaces the worker and keeps the same camera stream', asyn
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto(`/entries/?id=${id}`)
   await page.getByRole('tab', { name: 'AR', exact: true }).click()
+  await showDebug(page)
   const toggle = page.getByRole('button', { name: 'GPU acceleration' })
   await expect(toggle).toHaveText('CPU')
   await expect(toggle).toHaveAttribute('aria-pressed', 'false')

@@ -1,3 +1,4 @@
+import { showDebug } from './fixtures/debug'
 import { test, expect } from '@playwright/test'
 import { archive, id } from './fixtures/archive'
 import { fakeCamera } from './fixtures/camera'
@@ -18,6 +19,7 @@ for (const side of ['Right','Left'] as const) {
     await page.goto(`/entries/?id=${id}`)
     await page.evaluate(side => {window.orientationTest.beta=90; window.cameraTest.facing=side==='Left'?'user':'environment'},side)
     await page.getByRole('tab',{name:'AR',exact:true}).click()
+    await showDebug(page)
     const bird=page.locator('.interactive-bird')
     await expect(bird).toHaveAttribute('data-state','hidden')
     await expect(bird).toHaveAttribute('data-state','arriving',{timeout:15000})
@@ -74,6 +76,7 @@ test('bird loading failure can be retried without interrupting tracking',async({
   await page.goto(`/entries/?id=${id}`)
   await page.evaluate(()=>{window.orientationTest.beta=90})
   await page.getByRole('tab',{name:'AR',exact:true}).click()
+  await showDebug(page)
   await expect(page.locator('.interactive-bird')).toHaveAttribute('data-model','failed')
   await expect(page.locator('.hand-overlay')).toHaveAttribute('data-hands','1')
   await expect(page.locator('video')).toHaveJSProperty('paused',false)
@@ -89,6 +92,7 @@ test('depth-aligned gravity fades the bird without inventing sideways movement',
   await fakeHandTracker(page, openHand())
   await page.goto(`/entries/?id=${id}`)
   await page.getByRole('tab', { name: 'AR', exact: true }).click()
+  await showDebug(page)
   const bird = page.locator('.interactive-bird')
   await expect(bird).toHaveAttribute('data-state', 'hovering')
   const before = (await bird.boundingBox())!
@@ -127,6 +131,7 @@ test('a tracked skeleton keeps the bird present through missing normal or handed
   await page.goto(`/entries/?id=${id}`)
   await page.evaluate(() => { window.orientationTest.beta = 90 })
   await page.getByRole('tab', { name: 'AR', exact: true }).click()
+  await showDebug(page)
   const bird = page.locator('.interactive-bird')
   await expect(bird).toHaveAttribute('data-state', 'hovering')
   const uncertain = structuredClone(frame)

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode, type Ref } from 'react'
 import { Icon } from '../ui/Icon'
 import { uiText } from '../ui/ui-text'
 import './camera.css'
@@ -7,7 +7,7 @@ type CameraStatus = 'loading' | 'ready' | 'paused' | 'denied' | 'missing' | 'fai
 
 export interface CameraInput { video: HTMLVideoElement; mirrored: boolean }
 
-export function CameraView({ children }: { children?: (input: CameraInput) => ReactNode }) {
+export function CameraView({ children, surfaceRef }: { children?: (input: CameraInput) => ReactNode; surfaceRef?: Ref<HTMLDivElement> }) {
   const video = useRef<HTMLVideoElement>(null)
   const [status, setStatus] = useState<CameraStatus>('loading')
   const [mirrored, setMirrored] = useState(false)
@@ -85,7 +85,7 @@ export function CameraView({ children }: { children?: (input: CameraInput) => Re
     }
   }, [attempt])
 
-  return <div className="camera-view" data-state={status}>
+  return <div ref={surfaceRef} className="camera-view" data-state={status}>
     <video ref={video} className="camera-video" data-mirrored={mirrored} autoPlay muted playsInline aria-hidden="true" />
     {status === 'ready' && video.current && children?.({ video: video.current, mirrored })}
     {status !== 'ready' && <div className="camera-message" role="status">

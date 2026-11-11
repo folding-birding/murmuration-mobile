@@ -1,3 +1,4 @@
+import { showDebug } from './fixtures/debug'
 import { test, expect } from '@playwright/test'
 import { archive, id } from './fixtures/archive'
 import { fakeCamera } from './fixtures/camera'
@@ -15,6 +16,7 @@ for (const facing of ['environment', 'user'] as const) {
     await page.goto(`/entries/?id=${id}`)
     await page.evaluate(facing => { window.cameraTest.facing = facing }, facing)
     await page.getByRole('tab', { name: 'AR', exact: true }).click()
+    await showDebug(page)
     const normal = page.locator('[data-vector=normal]'), up = page.locator('[data-vector=up]')
     await expect(normal).toBeVisible({ timeout: 40_000 })
     await expect(up).toBeVisible()
