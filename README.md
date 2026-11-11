@@ -34,7 +34,7 @@ The mobile interface follows the Mobile page in Figma: a gradient lookup screen 
 - Permission errors, network failures, malformed data, and server outages retain the ID and offer a retry.
 - Swipe left/right in portrait or up/down in landscape through QR / 3D View / AR, or select the pagination dots. The transition follows the same axis: left/up opens the next view, right/down returns to the previous view. Rotation and double-tap playback use a square centered in the body, excluding the header and footer. Its side equals the smaller of the body's width and height, and updates when the device rotates. Inside this square, horizontal dragging always rotates the bird; swipe in the remaining body whitespace to change slides. Header and footer controls remain accessible. The gesture is determined where the touch starts and stays assigned until release. The rendered bird size is independent of this touch area. Pagination uses left/right arrow keys in portrait and up/down arrow keys in landscape, plus Home and End.
 - In landscape, the header and footer become 60 px side rails, leaving the full height available to the body. The logo stays upright at the top of the header, with download below it and vertical pagination on the opposite side. Secondary landscape orientation swaps the rails; browsers without orientation direction information use the left header. The original top/bottom layout returns in portrait.
-- AR currently shows live camera video only. Opening the tab requests the rear camera when available, without microphone access; front-facing video is mirrored when reported by the device. Leaving AR or hiding the browser stops all tracks. Interrupted or failed camera access can be retried using the restart control. Camera frames are not recorded or uploaded. Rotation keeps the current stream, and the camera area supports the same orientation-dependent page swipes.
+- AR shows live camera video with a MediaPipe hand skeleton and timing debug overlay. Opening the tab requests the rear camera when available, without microphone access; front-facing video is mirrored when reported by the device. Leaving AR or hiding the browser stops all tracks. Interrupted or failed camera access can be retried using the restart control. Camera frames are not recorded or uploaded. Rotation keeps the current stream, and the camera area supports the same orientation-dependent page swipes.
 - The bird repeats its hover animation. Drag or use arrow keys to turn it. Double-tap or press Enter while focused to hear its birdsong. Leaving the slide stops audio and releases the WebGL scene.
 - The entry screen displays the worker's archived `outputs/qr.svg`, preserving the same QR code as the original ticket without generating a new one in the browser.
 - A failed 3D view can be retried; QR and HTML export remain available.
@@ -97,7 +97,9 @@ The offline runtime is generated during production builds and on demand during d
 src/
   app/       Online lookup, loading, and error screens
   archive/   Entry types, ID validation, and R2 loading
-  camera/    Live camera preview and stream lifecycle
+  camera/    Camera lifecycle and shared image coordinates
+    hand/    MediaPipe worker, frame source, tracking hook, and controls
+    debug/   Skeleton and timing overlays
   entry/     Shared QR/3D presentation, swipes, and birdsong playback
   viewer/    FBX animation, texture rendering, and rotation gestures
   offline/   Standalone HTML export and its independent entry point
@@ -108,7 +110,7 @@ src/
 
 Feature styles live beside their components. `src/ui/ui-text.ts` holds interface copy and accessibility labels; `src/ui/ui-variable.ts` holds visual variables and applies them to both online and offline pages.
 
-The online app loads an entry through `archive/client.ts` and passes it to `entry/EntryViewer.tsx`. The saved HTML passes embedded entry data to the same viewer. The viewer does not import archive fetching or export controls. Only the online app adds the download button, keeping its code, icon, and styles out of saved HTML.
+The online app loads an entry through `archive/client.ts` and passes it to `entry/EntryViewer.tsx`. The saved HTML passes embedded entry data to the same viewer. The viewer does not import archive fetching or export controls. Only the online app adds the download button and camera view, keeping their code, assets, and styles out of saved HTML.
 
 - `entries/index.html`: public entry page.
 - `public/site-config.json`: public R2 root URL.
@@ -117,3 +119,13 @@ The online app loads an entry through `archive/client.ts` and passes it to `entr
 - `test/`: unit and browser tests, fixtures, configurations, and the HTTPS-aware test runner.
 
 The existing Murmuration model and brand assets are reused. Pretendard's license is included in `public/Pretendard-LICENSE.txt`.
+
+## Hand tracking
+
+The AR tab runs `@mediapipe/tasks-vision` 1.2.2 Hand Landmarker in a module Web Worker, using the GPU or CPU/WASM delegate selected by the top-right toggle (CPU initially). Switching terminates the old worker before starting the new one, resets timing statistics, and keeps the same camera stream. Only the selected delegate runs; initialization failure shows the retry control and allows switching explicitly, without silently falling back to another delegate. It tracks one hand with 21 landmarks. Limiting detection to one hand avoids repeatedly searching for a second hand while the first is tracked reliably. Image coordinates align the overlay with the centered camera cover crop; bones are 2 px white lines and joints are solid white circles without outlines. Joint diameter maps estimated Z depth relative to the wrist linearly from -0.15 m (closer) to 16 px and +0.15 m (farther) to 2 px, clamped to this range. At wrist depth (0 m), the diameter is 9 px. These estimated 3D coordinates are relative to each hand, not a world-anchored AR pose.
+
+There is no fixed inference FPS cap. The tracker processes the latest available camera frame when idle, with one frame in flight and a 640 px input longest edge. Actual throughput depends on the camera, display refresh, and device performance. The 12 px bottom debug panel has four rows: camera resolution, inference input resolution, Tracking (CPU/GPU), and Total. Tracking shows the mean inference-call duration; Total measures from frame preparation start through worker transfer, inference, and synchronous frame subscribers, including debug drawing when enabled. Both average the same completed frames over one-second reporting intervals and show the equivalent processing rate as 1000 / milliseconds. These FPS values represent processing capacity, not measured camera or tracking throughput, because they exclude waiting for the next camera/render frame. Camera images stay in the browser. The MediaPipe license is available in `public/MediaPipe-LICENSE.txt`. The model and WASM are served from the same site, load only on the AR tab, and are excluded from downloaded HTML. Model initialization or inference failures leave the camera active and show a retry icon. Leaving AR or pausing the camera terminates the worker and releases its memory.
+
+Handedness is stabilized once in the frame source without modifying MediaPipe's raw labels or landmark coordinates. Initial classification requires confidence of at least 0.75 for 100 ms. Switching sides requires at least 0.9 confidence continuously for 1000 ms; lower-confidence or missing labels retain the last accepted side while a valid skeleton remains tracked. Gaps above 250 ms interrupt confirmation. One second without a usable skeleton, restarting the tracker, or leaving AR resets the filter. The frame source exposes the accepted direction as `stableSide`; this value drives the Hand debug label and is available to downstream consumers. This suppresses classification spikes; it does not correct erroneous XYZ depth estimates.
+
+Camera capture, inference, and debug drawing have separate lifecycles. The frame source delivers timestamped landmarks to subscribers; removing the skeleton renderer does not stop inference. Hand tracking contains no palm classification, orientation sensor requests, or bird behavior. The optional DebugFrame is the single root for debug displays. Its enabled prop controls their mounting without owning inference.

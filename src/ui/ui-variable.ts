@@ -10,8 +10,12 @@ export const uiVariables = {
   'font-family': 'Pretendard, sans-serif',
 } as const
 
+export const trackingDebugFontSize = '12px'
+
 export function applyUiVariables() {
+  document.documentElement.style.setProperty('--tracking-debug-font-size', trackingDebugFontSize)
   for (const [key, value] of Object.entries(uiVariables)) {
     document.documentElement.style.setProperty(`--${key.replaceAll('/', '-')}`, value)
   }
 }
+

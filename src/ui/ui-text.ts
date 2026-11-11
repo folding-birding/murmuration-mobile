@@ -24,6 +24,18 @@ export const uiText = {
     unsupported: 'Camera access requires a supported browser and HTTPS.',
     retry: 'Restart camera',
   },
+  tracking: {
+    loading: 'Loading hand tracking.',
+    failed: 'Hand tracking is unavailable. The camera is still active.',
+    retry: 'Restart hand tracking',
+    gpuToggle: 'GPU acceleration',
+    hand: 'Hand',
+    cameraSize: 'Camera',
+    inputSize: 'Input',
+    frameRate: 'Tracking',
+    inferenceTime: 'Average inference time',
+    totalTime: 'Total',
+  },
   exportHtml: {
     download: 'Download offline HTML',
     preparing: 'Preparing offline HTML…',

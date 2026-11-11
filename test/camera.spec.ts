@@ -11,14 +11,15 @@ test.beforeEach(async ({ page }) => {
   await expect(page.getByRole('tab', { name: 'QR', exact: true })).toBeVisible()
 })
 
-test('AR starts only on entry and shows camera video without a model', async ({ page }) => {
+test('AR starts only on entry and keeps the camera active without a hand', async ({ page }) => {
   expect(await page.evaluate(() => window.cameraTest.calls)).toEqual([])
   await page.getByRole('tab', { name: '3D View', exact: true }).click()
   await expect(page.locator('.bird-preview')).toHaveAttribute('data-state', 'ready')
   expect(await page.evaluate(() => window.cameraTest.calls)).toEqual([])
   await page.getByRole('tab', { name: 'AR', exact: true }).click()
   await expect(page.locator('.camera-view')).toHaveAttribute('data-state', 'ready')
-  await expect(page.locator('canvas')).toHaveCount(0)
+  await expect(page.locator('.bird-preview')).toHaveCount(0)
+  await expect(page.locator('.hand-overlay')).toHaveCount(1)
   await expect(page.locator('video')).toHaveJSProperty('paused', false)
   await expect(page.locator('video')).toHaveJSProperty('muted', true)
   await expect(page.locator('video')).toHaveAttribute('playsinline', '')

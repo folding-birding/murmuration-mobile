@@ -5,6 +5,7 @@ declare global {
     cameraTest: {
       mode: 'ready' | 'denied' | 'missing' | 'pending'
       facing: 'environment' | 'user'
+      showImage: boolean
       calls: MediaStreamConstraints[]
       streams: MediaStream[]
       resolve?: () => void
@@ -12,9 +13,9 @@ declare global {
   }
 }
 
-export async function fakeCamera(page: Page) {
-  await page.addInitScript(() => {
-    const state: Window['cameraTest'] = { mode: 'ready', facing: 'environment', calls: [], streams: [] }
+export async function fakeCamera(page: Page, imageUrl?: string, crop?: { x: number; y: number; width: number; height: number }) {
+  await page.addInitScript(async ({ imageUrl, crop }) => {
+    const state: Window['cameraTest'] = { mode: 'ready', facing: 'environment', showImage: true, calls: [], streams: [] }
     const pending: (() => void)[] = []
     state.resolve = () => pending.splice(0).forEach(resolve => resolve())
     window.cameraTest = state
@@ -23,13 +24,20 @@ export async function fakeCamera(page: Page) {
       if (state.mode === 'denied') throw new DOMException('Test permission denial', 'NotAllowedError')
       if (state.mode === 'missing') throw new DOMException('Test missing camera', 'NotFoundError')
       if (state.mode === 'pending') await new Promise<void>(resolve => { pending.push(resolve) })
+      const image = imageUrl ? new Image() : undefined
+      if (image) { image.src = imageUrl!; await image.decode() }
       const canvas = document.createElement('canvas')
-      canvas.width = 640
-      canvas.height = 480
+      canvas.width = crop?.width ?? image?.naturalWidth ?? 640
+      canvas.height = crop?.height ?? image?.naturalHeight ?? 480
       const context = canvas.getContext('2d')!
       const draw = () => {
+        if (image && state.showImage) {
+          if (crop) context.drawImage(image, crop.x, crop.y, crop.width, crop.height, 0, 0, canvas.width, canvas.height)
+          else context.drawImage(image, 0, 0)
+          return
+        }
         context.fillStyle = '#adbeb9'
-        context.fillRect(0, 0, 640, 480)
+        context.fillRect(0, 0, canvas.width, canvas.height)
         context.fillStyle = '#4a7063'
         context.fillRect(0, 320, 640, 160)
       }
@@ -44,5 +52,5 @@ export async function fakeCamera(page: Page) {
       state.streams.push(stream)
       return stream
     }
-  })
+  }, { imageUrl, crop })
 }
