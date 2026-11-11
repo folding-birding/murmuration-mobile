@@ -1,7 +1,10 @@
 .debug-frame { position:absolute; inset:0; pointer-events:none; }
-.tracking-debug { position:absolute; left:12px; bottom:12px; max-width:calc(100% - 76px); padding:6px 8px; border-radius:var(--radius-4); background:var(--palette-ink); color:var(--palette-white); font-size:var(--tracking-debug-font-size); font-variant-numeric:tabular-nums; line-height:1.3; pointer-events:none; }
-.tracking-debug div { white-space:nowrap; }
+.tracking-debug,.vector-debug { position:absolute; left:12px; padding:6px 8px; border-radius:var(--radius-4); background:var(--palette-ink); color:var(--palette-white); font-size:var(--tracking-debug-font-size); font-variant-numeric:tabular-nums; pointer-events:none; }
+.tracking-debug { bottom:12px; max-width:calc(100% - 76px); line-height:1.3; }
+.vector-debug { top:12px; line-height:1.2; }
+.tracking-debug div,.vector-debug div { white-space:nowrap; }
+.debug-vectors,.debug-vector-overlay { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+.debug-vector-overlay { overflow:hidden; font-size:var(--tracking-debug-font-size); }
+
 .hand-overlay { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
 .hand-overlay[data-mirrored=true] { transform:scaleX(-1); }
-.vector-debug { position:absolute; top:12px; left:12px; padding:6px 8px; border-radius:var(--radius-4); background:var(--palette-ink); color:var(--palette-white); font-size:var(--tracking-debug-font-size); font-variant-numeric:tabular-nums; line-height:1.2; pointer-events:none; }
-.vector-debug div { white-space:nowrap; }

@@ -99,7 +99,8 @@ src/
   archive/   Entry types, ID validation, and R2 loading
   camera/    Camera lifecycle and shared image coordinates
     hand/    MediaPipe worker, frame source, tracking hook, and controls
-    debug/   Skeleton and timing overlays
+    orientation/  Sensor permissions and gravity conversion
+    debug/   Skeleton, timing, and independent vector overlays
   entry/     Shared QR/3D presentation, swipes, and birdsong playback
   viewer/    FBX animation, texture rendering, and rotation gestures
   offline/   Standalone HTML export and its independent entry point
@@ -129,3 +130,7 @@ There is no fixed inference FPS cap. The tracker processes the latest available 
 Handedness is stabilized once in the frame source without modifying MediaPipe's raw labels or landmark coordinates. Initial classification requires confidence of at least 0.75 for 100 ms. Switching sides requires at least 0.9 confidence continuously for 1000 ms; lower-confidence or missing labels retain the last accepted side while a valid skeleton remains tracked. Gaps above 250 ms interrupt confirmation. One second without a usable skeleton, restarting the tracker, or leaving AR resets the filter. The frame source exposes the accepted direction as `stableSide`; this value drives the Hand debug label and is available to downstream consumers. This suppresses classification spikes; it does not correct erroneous XYZ depth estimates.
 
 Camera capture, inference, and debug drawing have separate lifecycles. The frame source delivers timestamped landmarks to subscribers; removing the skeleton renderer does not stop inference. Hand tracking contains no palm classification, orientation sensor requests, or bird behavior. The optional DebugFrame is the single root for debug displays. Its enabled prop controls their mounting without owning inference.
+
+## Gravity and orientation
+
+Orientation sensor access, permission requests, and camera-space gravity conversion are independent of MediaPipe. The gravity debug view shows a blue world-up vector at the camera area center and XYZ values in 12 px text. Screen rotation and camera facing are included. +X points right, +Y down, and +Z away from the lens. Missing sensor data is not replaced by an invented direction. The shared VectorOverlay renderer accepts vector values and an anchor without importing hand types. Gravity visualization is added inside the same DebugFrame, using sensor values supplied by the composition layer.
