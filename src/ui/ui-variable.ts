@@ -19,4 +19,4 @@ export function applyUiVariables() {
   }
 }
 
-export const trackingDebugColors = { up: '#2979ff' } as const
+export const trackingDebugColors = { normal: '#ff3b30', up: '#2979ff', accepted: '#ffcc00' } as const

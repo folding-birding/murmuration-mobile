@@ -6,16 +6,18 @@ export interface DebugVector { name: string; symbol: string; label: string; colo
 export interface DebugVectorFrame {
   anchor: { x: number; y: number } | null
   values: (Vector3 | null)[]
+  highlight?: boolean
 }
 
-export function VectorOverlay({ vectors, readFrame, mirrored, header, className = '' }: {
+export function VectorOverlay({ vectors, readFrame, mirrored, highlightColor, header, className = '' }: {
   vectors: readonly DebugVector[]; readFrame: (width: number, height: number, time: number) => DebugVectorFrame
-  mirrored: boolean; header?: ReactNode; className?: string
+  mirrored: boolean; highlightColor?: string; header?: ReactNode; className?: string
 }) {
   const root = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const element = root.current!
     const anchor = element.querySelector<SVGGElement>('[data-anchor]')!
+    const highlight = element.querySelector<SVGCircleElement>('[data-gesture]')
     const parts = vectors.map(({ name }) => ({
       group: element.querySelector<SVGGElement>(`[data-vector="${name}"]`)!,
       arrow: element.querySelector<SVGPathElement>(`[data-vector="${name}"] path`)!,
@@ -32,6 +34,7 @@ export function VectorOverlay({ vectors, readFrame, mirrored, header, className 
       const sample = readFrame(width, height, time)
       anchor.style.display = sample.anchor ? '' : 'none'
       if (sample.anchor) anchor.setAttribute('transform', `translate(${sample.anchor.x} ${sample.anchor.y})`)
+      if (highlight) highlight.style.display = sample.highlight ? '' : 'none'
       const length = Math.max(60, Math.min(120, Math.min(width, height) * 0.24))
       parts.forEach((part, index) => {
         const value = sample.values[index]
@@ -52,10 +55,11 @@ export function VectorOverlay({ vectors, readFrame, mirrored, header, className 
     }
     frame = requestAnimationFrame(draw)
     return () => cancelAnimationFrame(frame)
-  }, [vectors, readFrame, mirrored])
+  }, [vectors, readFrame, mirrored, highlightColor])
   return <div ref={root} className={`debug-vectors ${className}`}>
     <svg className="debug-vector-overlay" aria-hidden="true">
       <g data-anchor="" style={{ display: 'none' }}>
+        {highlightColor && <circle data-gesture="open" r="12" fill={highlightColor} style={{ display: 'none' }} />}
         <circle r="4" fill="var(--palette-white)" />
         {vectors.map(({ name, symbol, color, dashed }) => <g key={name} data-vector={name} style={{ color }}>
           <path fill="none" stroke="currentColor" strokeWidth="4" strokeDasharray={dashed ? '6 4' : undefined} />

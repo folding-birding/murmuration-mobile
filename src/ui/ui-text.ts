@@ -30,6 +30,7 @@ export const uiText = {
     retry: 'Restart hand tracking',
     gpuToggle: 'GPU acceleration',
     hand: 'Hand',
+    palmNormal: 'Palm normal',
     gravityUp: 'Gravity up',
     enableGravity: 'Enable orientation sensors',
     gravity: {
