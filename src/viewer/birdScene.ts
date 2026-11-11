@@ -41,9 +41,9 @@ export function mountBirdScene(canvas: HTMLCanvasElement, textureUrl: string, on
   let disposed = false
   let frame = 0
   let previousTime = 0
-
+  let active = true
   function animate(time: number) {
-    if (disposed || document.hidden) return
+    if (disposed || document.hidden || !active) return
     const delta = previousTime ? Math.min((time - previousTime) / 1000, 0.05) : 0
     previousTime = time
     mixer?.update(delta)
@@ -53,7 +53,7 @@ export function mountBirdScene(canvas: HTMLCanvasElement, textureUrl: string, on
   function visibilityChanged() {
     cancelAnimationFrame(frame)
     previousTime = 0
-    if (!document.hidden && mixer && !disposed) frame = requestAnimationFrame(animate)
+    if (!document.hidden && mixer && !disposed && active) frame = requestAnimationFrame(animate)
   }
   function dispose() {
     if (disposed) return
@@ -133,5 +133,9 @@ export function mountBirdScene(canvas: HTMLCanvasElement, textureUrl: string, on
     dispose()
     onError()
   })
-  return { dispose, setYaw: (radians: number) => { turntable.rotation.y = radians } }
+  return { dispose, setActive: (value: boolean) => {
+    if (active === value || disposed) return
+    active = value
+    visibilityChanged()
+  }, setYaw: (radians: number) => { turntable.rotation.y = radians } }
 }

@@ -1,0 +1,4 @@
+.interactive-bird-layer { position:absolute; inset:0; overflow:hidden; pointer-events:none; }
+.interactive-bird { position:absolute; left:0; top:0; transform-origin:0 0; visibility:hidden; will-change:transform; }
+.interactive-bird canvas { display:block; width:100%; height:100%; }
+.interactive-bird-error { position:absolute; right:12px; bottom:48px; }
