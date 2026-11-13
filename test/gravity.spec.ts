@@ -81,7 +81,7 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 568, height: 320 }
     expect(await dialog.evaluate(element => {
       const style = getComputedStyle(element)
       return { color: style.backgroundColor, radius: style.borderRadius }
-    })).toEqual({ color: 'rgb(227, 230, 235)', radius: '20px' })
+    })).toEqual({ color: 'rgb(227, 230, 235)', radius: '16px' })
     for (const name of ['No', 'Allow']) {
       const button = dialog.getByRole('button', { name, exact: true })
       const rect = await button.boundingBox()

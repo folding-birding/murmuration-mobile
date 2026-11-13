@@ -8,7 +8,6 @@ export const uiVariables = {
   'palette/ligihtgray': '#e3e6eb',
   'radius/4': '4px',
   'radius/16': '16px',
-  'radius/20': '20px',
   'typography/font-size/18': '18px',
   'font-family': 'Pretendard, sans-serif',
 } as const
