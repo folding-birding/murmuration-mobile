@@ -24,6 +24,7 @@ export const uiText = {
     unsupported: 'Camera access requires a supported browser and a secure page or trusted local file.',
     retry: 'Restart camera',
   },
+  motionPermission: { title: 'Enable motion access', decline: 'No', allow: 'Allow' },
   tracking: {
     loading: 'Loading hand tracking.',
     failed: 'Hand tracking is unavailable. The camera is still active.',
@@ -32,10 +33,10 @@ export const uiText = {
     hand: 'Hand',
     palmNormal: 'Palm normal',
     gravityUp: 'Gravity up',
-    enableGravity: 'Enable orientation sensors',
     gravity: {
       waiting: 'Waiting for orientation sensors. Gravity up is unavailable.',
-      permission: 'Enable orientation sensors to display gravity up.',
+      permission: 'Allow motion and orientation access so your bird can hover above your palm.',
+      requesting: 'Waiting for motion and orientation permission.',
       denied: 'Orientation access was denied. Allow motion and orientation in browser settings.',
       unavailable: 'Orientation sensors are unavailable. Gravity up is unavailable.',
     },

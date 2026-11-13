@@ -1,1 +1,8 @@
-.gravity-status { position:absolute; top:64px; right:12px; z-index:1; color:var(--palette-white); background:var(--palette-ink); border-radius:var(--radius-4); }
+.motion-permission-backdrop { position:absolute; inset:0; z-index:2; display:flex; align-items:center; justify-content:center; padding:10px; background:var(--palette-black); }
+.motion-permission { display:flex; flex-direction:column; align-items:center; justify-content:center; flex:none; gap:10px; width:256px; height:96px; padding:10px; border-radius:var(--radius-20); background:var(--palette-ligihtgray); color:var(--palette-black); }
+.motion-permission h2 { font-size:var(--typography-font-size-18); font-weight:700; line-height:normal; white-space:nowrap; }
+.motion-permission-actions { display:flex; justify-content:space-between; width:200px; }
+.motion-permission-actions button { display:flex; align-items:center; justify-content:center; width:96px; height:24px; padding:0; border:0; border-radius:var(--radius-16); background:var(--palette-white); color:var(--palette-ink); font-size:var(--typography-font-size-18); font-weight:400; line-height:normal; white-space:nowrap; }
+.motion-permission-actions .motion-permission-allow { background:var(--palette-blue); color:var(--palette-white); }
+.motion-permission-actions button:disabled { cursor:wait; }
+.motion-permission-actions button:focus-visible { outline-color:var(--palette-ink); }

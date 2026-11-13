@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { cameraUp } from './gravity'
 import type { Vector3 } from '../coordinates'
 
-export type GravityStatus = 'waiting' | 'ready' | 'permission' | 'denied' | 'unavailable'
+export type GravityStatus = 'waiting' | 'ready' | 'permission' | 'requesting' | 'denied' | 'unavailable'
 type OrientationAPI = typeof DeviceOrientationEvent & { requestPermission?: () => Promise<'granted' | 'denied'> }
 
 export function useGravity(frontCamera: boolean) {
@@ -10,7 +10,7 @@ export function useGravity(frontCamera: boolean) {
   const [status, setStatus] = useState<GravityStatus>('waiting')
   const request = useRef<() => void>(() => {})
   useEffect(() => {
-    let active = true, listening = false, timer = 0
+    let active = true, listening = false, pending = false, timer = 0
     let angles: { beta: number; gamma: number } | null = null
     const api = window.DeviceOrientationEvent as OrientationAPI | undefined
     up.current = null
@@ -41,14 +41,16 @@ export function useGravity(frontCamera: boolean) {
       timer = window.setTimeout(() => { if (active) setStatus('unavailable') }, 4000)
     }
     request.current = () => {
-      if (!api) return
+      if (!api || pending) return
       if (!api.requestPermission) { listen(); return }
+      pending = true
+      setStatus('requesting')
       // Safari requires this call to originate directly from a user gesture.
       void api.requestPermission().then(result => {
         if (!active) return
         if (result === 'granted') listen()
         else { up.current = null; setStatus('denied') }
-      }).catch(() => { if (active) { up.current = null; setStatus('denied') } })
+      }).catch(() => { if (active) { up.current = null; setStatus('denied') } }).finally(() => { pending = false })
     }
     if (!api) setStatus('unavailable')
     else if (api.requestPermission) { attach(); setStatus('permission') }
